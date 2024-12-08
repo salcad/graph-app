@@ -9,6 +9,7 @@ interface GraphNode extends d3.SimulationNodeDatum {
   label?: string;
   color?: string;
   size?: number;
+  degree?: number; // New property to store the degree of the node
 }
 
 interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
@@ -32,15 +33,20 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
     const graph = new Graph();
     graph.import(graphData);
 
+    // Calculate the degree of each node
+    graph.forEachNode((node, attributes) => {
+      attributes.degree = graph.degree(node);
+    });
+
     // Convert Graphology graph to nodes and links arrays
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
-    // Ensure that nodes have label properties
     graph.forEachNode((nodeKey, nodeAttributes) => {
       nodes.push({
         id: nodeKey,
         ...nodeAttributes,
+        size: Math.max(10, nodeAttributes.degree! * 2) // Ensure size is large enough to view
       });
     });
 
@@ -79,6 +85,53 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
     // Add a container for the graph elements to apply transformations
     const graphGroup = g.append('g');
 
+    // Set up the D3 force simulation
+    const simulation = d3
+      .forceSimulation<GraphNode>(nodes)
+      .force(
+        'link',
+        d3.forceLink<GraphNode, GraphLink>(links)
+          .id((d) => d.id)
+          .distance(100)
+      )
+      .force('charge', d3.forceManyBody().strength(-300)) // Adjust strength for better spacing
+      .force('center', d3.forceCenter(0, 0))
+      .force('x', d3.forceX().strength((d) => (d.degree || 0) * 0.01)) // Slight pull towards center based on degree
+      .force('y', d3.forceY().strength((d) => (d.degree || 0) * 0.01)) // Slight pull towards center based on degree
+      .stop(); // Stop the simulation to manually control ticks
+
+    // Manually run the simulation to completion
+    for (let i = 0; i < 300; i++) {
+      simulation.tick();
+    }
+
+    // Calculate the bounding box of the nodes
+    const xValues = nodes.map((d) => d.x!);
+    const yValues = nodes.map((d) => d.y!);
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+    const minY = Math.min(...yValues);
+    const maxY = Math.max(...yValues);
+
+    const graphWidth = maxX - minX;
+    const graphHeight = maxY - minY;
+
+    // Calculate scale to fit the graph within the SVG with padding
+    const scale = Math.min(
+      (width - 2 * padding) / graphWidth,
+      (height - 2 * padding) / graphHeight
+    );
+
+    // Calculate translation to center the graph
+    const translateX = width / 2 - (minX + graphWidth / 2) * scale;
+    const translateY = height / 2 - (minY + graphHeight / 2) * scale;
+
+    // Apply the calculated zoom transform
+    svg.call(
+      zoomBehavior.transform,
+      d3.zoomIdentity.translate(translateX, translateY).scale(scale*2)
+    );
+
     // Add lines for the links
     const link = graphGroup
       .selectAll<SVGLineElement, GraphLink>('line')
@@ -94,7 +147,7 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
       .data(nodes)
       .enter()
       .append('circle')
-      .attr('r', (d) => d.size || 5)
+      .attr('r', (d) => d.size || 10) // Include degree influence in size
       .attr('fill', (d) => d.color || '#1f77b4')
       .call(
         d3
@@ -138,7 +191,7 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
       .attr('class', 'link-label')
       .text((d) => (d.label ? d.label.toLowerCase() : ''))
       .attr('font-size', '6px')
-      .attr('fill', 'gray');
+      .attr('fill', 'white');
 
     // Function to update positions based on node coordinates
     function updatePositions() {
@@ -171,50 +224,11 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
         );
     }
 
-    // Set up the D3 force simulation
-    const simulation = d3
-      .forceSimulation<GraphNode>(nodes)
-      .force(
-        'link',
-        d3
-          .forceLink<GraphNode, GraphLink>(links)
-          .id((d) => d.id)
-          .distance(100)
-      )
-      .force('charge', d3.forceManyBody().strength(-500))
-      .force('center', d3.forceCenter(0, 0));
+    // Call updatePositions initially to set positions
+    updatePositions();
 
     // Add the tick handler to the simulation
-    simulation.on('tick', () => {
-      updatePositions();
-      if (simulation.alpha() < 0.05) {
-        simulation.stop();
-
-        // Compute the zoom transform to fit the graph
-        const xExtent = d3.extent(nodes, (d) => d.x!);
-        const yExtent = d3.extent(nodes, (d) => d.y!);
-
-        const minX = xExtent[0]!;
-        const maxX = xExtent[1]!;
-        const minY = yExtent[0]!;
-        const maxY = yExtent[1]!;
-
-        const graphWidth = maxX - minX;
-        const graphHeight = maxY - minY;
-
-        const scale = Math.min(
-          (width - 2 * padding) / graphWidth,
-          (height - 2 * padding) / graphHeight
-        );
-
-        const translateX = (width - scale * (minX + maxX)) / 2;
-        const translateY = (height - scale * (minY + maxY)) / 2;
-
-        const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale*4);
-
-        svg.transition().duration(750).call(zoomBehavior.transform, transform);
-      }
-    });
+    simulation.on('tick', updatePositions);
 
     // Clean up the simulation on component unmount
     return () => {
