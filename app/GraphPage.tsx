@@ -32,7 +32,7 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
     const graph = new Graph();
     graph.import(graphData);
 
-    // Convert graphology graph to nodes and links arrays
+    // Convert Graphology graph to nodes and links arrays
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
@@ -56,38 +56,31 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
     // Set dimensions for the SVG
     const width = 800;
     const height = 600;
+    const padding = 50; // Padding around the graph
 
     // Select the SVG element and clear any previous content
     const svgElement = d3.select(svgRef.current);
     svgElement.selectAll('*').remove();
 
     // Add zoom and pan behavior
+    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 10]) // Define the zoom scale extent
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+      });
+
     const svg = svgElement
       .attr('width', width)
       .attr('height', height)
-      .call(
-        d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
-          g.attr('transform', event.transform);
-        })
-      );
+      .call(zoomBehavior);
 
     const g = svg.append('g'); // Container for all the elements
 
-    // Set up the D3 force simulation
-    const simulation = d3
-      .forceSimulation<GraphNode>(nodes)
-      .force(
-        'link',
-        d3
-          .forceLink<GraphNode, GraphLink>(links)
-          .id((d) => d.id)
-          .distance(100)
-      )
-      .force('charge', d3.forceManyBody().strength(-500))
-      .force('center', d3.forceCenter(width / 2, height / 2));
+    // Add a container for the graph elements to apply transformations
+    const graphGroup = g.append('g');
 
     // Add lines for the links
-    const link = g
+    const link = graphGroup
       .selectAll<SVGLineElement, GraphLink>('line')
       .data(links)
       .enter()
@@ -96,7 +89,7 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
       .attr('stroke', (d) => d.color || '#999');
 
     // Add circles for the nodes
-    const node = g
+    const node = graphGroup
       .selectAll<SVGCircleElement, GraphNode>('circle')
       .data(nodes)
       .enter()
@@ -123,7 +116,7 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
       );
 
     // Add labels for the nodes
-    const labels = g
+    const labels = graphGroup
       .selectAll<SVGTextElement, GraphNode>('text.node-label')
       .data(nodes)
       .enter()
@@ -134,35 +127,93 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
       .attr('text-anchor', 'middle')
       .attr('dy', -10)
       .attr('font-size', '12px')
-      .attr('fill', 'white'); 
+      .attr('fill', 'white');
 
     // Add labels for the links
-    const linkLabels = g
+    const linkLabels = graphGroup
       .selectAll<SVGTextElement, GraphLink>('text.link-label')
       .data(links)
       .enter()
       .append('text')
       .attr('class', 'link-label')
-      .text((d) => d.label.toLowerCase() || '')
+      .text((d) => (d.label ? d.label.toLowerCase() : ''))
       .attr('font-size', '6px')
-      .attr('fill', 'gray'); 
+      .attr('fill', 'gray');
 
-    // Update positions on each simulation tick
-    simulation.on('tick', () => {
+    // Function to update positions based on node coordinates
+    function updatePositions() {
+      // Update positions of links
       link
         .attr('x1', (d) => (d.source as GraphNode).x!)
         .attr('y1', (d) => (d.source as GraphNode).y!)
         .attr('x2', (d) => (d.target as GraphNode).x!)
         .attr('y2', (d) => (d.target as GraphNode).y!);
 
-      node.attr('cx', (d) => d.x!).attr('cy', (d) => d.y!);
+      // Update positions of nodes
+      node
+        .attr('cx', (d) => d.x!)
+        .attr('cy', (d) => d.y!);
 
-      labels.attr('x', (d) => d.x!).attr('y', (d) => d.y! - 10);
+      // Update positions of node labels
+      labels
+        .attr('x', (d) => d.x!)
+        .attr('y', (d) => d.y! - 10);
 
-      // Position the link labels at the midpoint of the links
+      // Update positions of link labels at the midpoint of the links
       linkLabels
-        .attr('x', (d) => ((d.source as GraphNode).x! + (d.target as GraphNode).x!) / 2)
-        .attr('y', (d) => ((d.source as GraphNode).y! + (d.target as GraphNode).y!) / 2);
+        .attr(
+          'x',
+          (d) => ((d.source as GraphNode).x! + (d.target as GraphNode).x!) / 2
+        )
+        .attr(
+          'y',
+          (d) => ((d.source as GraphNode).y! + (d.target as GraphNode).y!) / 2
+        );
+    }
+
+    // Set up the D3 force simulation
+    const simulation = d3
+      .forceSimulation<GraphNode>(nodes)
+      .force(
+        'link',
+        d3
+          .forceLink<GraphNode, GraphLink>(links)
+          .id((d) => d.id)
+          .distance(100)
+      )
+      .force('charge', d3.forceManyBody().strength(-500))
+      .force('center', d3.forceCenter(0, 0));
+
+    // Add the tick handler to the simulation
+    simulation.on('tick', () => {
+      updatePositions();
+      if (simulation.alpha() < 0.05) {
+        simulation.stop();
+
+        // Compute the zoom transform to fit the graph
+        const xExtent = d3.extent(nodes, (d) => d.x!);
+        const yExtent = d3.extent(nodes, (d) => d.y!);
+
+        const minX = xExtent[0]!;
+        const maxX = xExtent[1]!;
+        const minY = yExtent[0]!;
+        const maxY = yExtent[1]!;
+
+        const graphWidth = maxX - minX;
+        const graphHeight = maxY - minY;
+
+        const scale = Math.min(
+          (width - 2 * padding) / graphWidth,
+          (height - 2 * padding) / graphHeight
+        );
+
+        const translateX = (width - scale * (minX + maxX)) / 2;
+        const translateY = (height - scale * (minY + maxY)) / 2;
+
+        const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale*4);
+
+        svg.transition().duration(750).call(zoomBehavior.transform, transform);
+      }
     });
 
     // Clean up the simulation on component unmount
