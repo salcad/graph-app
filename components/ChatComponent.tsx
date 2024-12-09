@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
@@ -22,6 +23,10 @@ import { styled } from '@mui/material/styles';
 interface Message {
   type: 'prompt' | 'response';
   text: string;
+}
+
+interface ChatComponentProps {
+  onSaveComplete?: () => void;
 }
 
 const ChatContainer = styled(Box)(({ theme }) => ({
@@ -69,12 +74,12 @@ const ResponseBubble = styled(Paper)(({ theme }) => ({
   alignSelf: 'flex-start',
 }));
 
-const ChatComponent: React.FC = () => {
+const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState<string>('');
   const outputEndRef = useRef<HTMLDivElement | null>(null);
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false); // New state for saving
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const [alertOpen, setAlertOpen] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string>('');
@@ -157,7 +162,7 @@ const ChatComponent: React.FC = () => {
     const latestResponseMessage = [...messages].reverse().find((msg) => msg.type === 'response');
 
     if (latestResponseMessage) {
-      setIsSaving(true); // Start saving animation
+      setIsSaving(true);
       try {
         const response = await fetch('http://localhost:8080/api/saveToGraph', {
           method: 'POST',
@@ -174,6 +179,12 @@ const ChatComponent: React.FC = () => {
         setAlertMessage('Successfully saved to graph.');
         setAlertSeverity('success');
         setAlertOpen(true);
+
+        // Call onSaveComplete to refresh graph data
+        if (onSaveComplete) {
+          onSaveComplete();
+        }
+
       } catch (error: any) {
         console.error('Error saving to graph:', error);
         setAlertMessage(`Error saving to graph: ${error.message}`);
@@ -272,6 +283,6 @@ const ChatComponent: React.FC = () => {
       </Snackbar>
     </ChatContainer>
   );
-}
+};
 
 export default ChatComponent;
