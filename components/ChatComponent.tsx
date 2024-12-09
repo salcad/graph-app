@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
@@ -155,7 +155,7 @@ const ChatComponent: React.FC = () => {
 
   const saveToGraph = async () => {
     const latestResponseMessage = [...messages].reverse().find((msg) => msg.type === 'response');
-    
+
     if (latestResponseMessage) {
       setIsSaving(true); // Start saving animation
       try {
@@ -166,11 +166,11 @@ const ChatComponent: React.FC = () => {
           },
           body: latestResponseMessage.text,
         });
-  
+
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
-        };
-  
+        }
+
         setAlertMessage('Successfully saved to graph.');
         setAlertSeverity('success');
         setAlertOpen(true);
@@ -254,7 +254,7 @@ const ChatComponent: React.FC = () => {
             color="secondary"
             onClick={saveToGraph}
             disabled={isSaving} 
-            startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null} // Show loading icon
+            startIcon={isSaving ? <CircularProgress size={20} /> : null}
           >
             {isSaving ? 'Saving...' : 'Save to Graph'}
           </Button>
