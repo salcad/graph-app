@@ -1,3 +1,4 @@
+// app/GraphPage.tsx
 'use client'
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
@@ -25,7 +26,7 @@ interface GraphPageProps {
   graphData: Graph; // Graphology graph
 }
 
-const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
+const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -239,4 +240,4 @@ const GraphPage: React.FC<GraphPageProps> = ({ graphData }) => {
   return <svg ref={svgRef}></svg>;
 };
 
-export default GraphPage;
+export default GraphComponent;

@@ -83,7 +83,7 @@ const ResponseBubble = styled(Paper)(({ theme }) => ({
   alignSelf: 'flex-start',
 }));
 
-export default function ChatPage() {
+const ChatComponent: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState<string>('');
   const outputEndRef = useRef<HTMLDivElement | null>(null);
@@ -152,8 +152,31 @@ export default function ChatPage() {
     }
   };
 
-  const saveToGraph = () => {
-    alert('Save to Graph functionality is not implemented yet.');
+  const saveToGraph = async () => {
+    const latestResponseMessage = [...messages].reverse().find((msg) => msg.type === 'response');
+    
+    if (latestResponseMessage) {
+      try {
+        const response = await fetch('http://localhost:8080/api/saveToGraph', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: latestResponseMessage.text,
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+  
+        alert('Successfully saved to graph.');
+      } catch (error) {
+        console.error('Error saving to graph:', error);
+        alert(`Error saving to graph: ${error.message}`);
+      }
+    } else {
+      alert('No response message to save.');
+    }
   };
 
   return (
@@ -224,3 +247,5 @@ export default function ChatPage() {
     </ChatContainer>
   );
 }
+
+export default ChatComponent;
