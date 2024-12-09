@@ -13,6 +13,8 @@ import {
   CircularProgress,
   Stack,
   Paper,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { FaUser, FaRobot } from 'react-icons/fa';
 import { styled } from '@mui/material/styles';
@@ -41,22 +43,6 @@ const OutputBox = styled(Paper)(({ theme }) => ({
   overflowY: 'auto',
   marginBottom: theme.spacing(2),
   maxHeight: '60vh',
-}));
-
-const MessageRow = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'flex-start',
-  marginBottom: theme.spacing(1),
-  padding: theme.spacing(0.5, 0),
-  position: 'relative',
-  '&:not(:last-child)::after': {
-    content: '""',
-    position: 'absolute',
-    left: 40,
-    top: '100%',
-    width: 'calc(100% - 40px)',
-    borderTop: '1px solid #555555',
-  },
 }));
 
 const PromptBubble = styled(Paper)(({ theme }) => ({
@@ -88,6 +74,11 @@ const ChatComponent: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
   const outputEndRef = useRef<HTMLDivElement | null>(null);
   const [isSending, setIsSending] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false); // New state for saving
+
+  const [alertOpen, setAlertOpen] = useState<boolean>(false);
+  const [alertMessage, setAlertMessage] = useState<string>('');
+  const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('info');
 
   const scrollToBottom = () => {
     if (outputEndRef.current) {
@@ -98,6 +89,16 @@ const ChatComponent: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleAlertClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setAlertOpen(false);
+  };
 
   const sendPrompt = async () => {
     if (!prompt.trim()) return;
@@ -156,6 +157,7 @@ const ChatComponent: React.FC = () => {
     const latestResponseMessage = [...messages].reverse().find((msg) => msg.type === 'response');
     
     if (latestResponseMessage) {
+      setIsSaving(true); // Start saving animation
       try {
         const response = await fetch('http://localhost:8080/api/saveToGraph', {
           method: 'POST',
@@ -167,15 +169,23 @@ const ChatComponent: React.FC = () => {
   
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
-        }
+        };
   
-        alert('Successfully saved to graph.');
-      } catch (error) {
+        setAlertMessage('Successfully saved to graph.');
+        setAlertSeverity('success');
+        setAlertOpen(true);
+      } catch (error: any) {
         console.error('Error saving to graph:', error);
-        alert(`Error saving to graph: ${error.message}`);
+        setAlertMessage(`Error saving to graph: ${error.message}`);
+        setAlertSeverity('error');
+        setAlertOpen(true);
+      } finally {
+        setIsSaving(false); 
       }
     } else {
-      alert('No response message to save.');
+      setAlertMessage('No response message to save.');
+      setAlertSeverity('info');
+      setAlertOpen(true);
     }
   };
 
@@ -239,11 +249,27 @@ const ChatComponent: React.FC = () => {
           >
             {isSending ? 'Sending...' : 'Send Prompt'}
           </Button>
-          <Button variant="contained" color="secondary" onClick={saveToGraph}>
-            Save to Graph
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={saveToGraph}
+            disabled={isSaving} 
+            startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null} // Show loading icon
+          >
+            {isSaving ? 'Saving...' : 'Save to Graph'}
           </Button>
         </Stack>
       </Stack>
+      <Snackbar
+        open={alertOpen}
+        autoHideDuration={6000}
+        onClose={handleAlertClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleAlertClose} severity={alertSeverity} sx={{ width: '100%' }}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </ChatContainer>
   );
 }
