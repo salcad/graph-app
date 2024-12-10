@@ -41,16 +41,23 @@ const ChatContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   display: 'flex',
   flexDirection: 'column',
+  overflowY: 'auto', 
+}));
+
+const ContentContainer = styled(Box)(() => ({
+  display: 'flex',
+  flexDirection: 'column',
+  flexGrow: 1,
 }));
 
 const OutputBox = styled(Paper)(({ theme }) => ({
-  flex: 1,
-  backgroundColor: '#2c2c2c',
+  backgroundColor: '#000000', 
   padding: theme.spacing(2),
   borderRadius: theme.shape.borderRadius,
-  overflowY: 'auto',
+  overflowY: 'auto', 
   marginBottom: theme.spacing(2),
-  maxHeight: '60vh',
+  flexShrink: 0,
+  maxHeight: '70vh', 
 }));
 
 const PromptBubble = styled(Paper)(({ theme }) => ({
@@ -81,6 +88,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState<string>('');
   const outputEndRef = useRef<HTMLDivElement | null>(null);
+  const promptInputRef = useRef<HTMLInputElement | null>(null); 
   const [isSending, setIsSending] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
@@ -97,6 +105,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (promptInputRef.current) {
+      promptInputRef.current.focus(); 
+    }
+  }, []);
 
   const handleAlertClose = (
     event?: React.SyntheticEvent | Event,
@@ -209,65 +223,68 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
         LLM Chat
       </Typography>
 
-      <OutputBox elevation={3}>
-        <List>
-          {messages.map((msg, index) => (
-            <ListItem key={index} alignItems="flex-start" disableGutters>
-              <ListItemAvatar>
-                <Avatar
-                  sx={{
-                    bgcolor: msg.type === 'prompt' ? '#4CAF50' : '#2196F3',
-                  }}
-                >
-                  {msg.type === 'prompt' ? <FaUser /> : <FaRobot />}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={
-                  msg.type === 'prompt' ? (
-                    <PromptBubble elevation={1}>{msg.text}</PromptBubble>
-                  ) : (
-                    <ResponseBubble elevation={1}>
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          // Code block rendering with syntax highlighting
-                          code({ node, inline, className, children, ...props }) {
-                            const match = /language-(\w+)/.exec(className || '')
-                            return !inline && match ? (
-                              <SyntaxHighlighter
-                                style={materialDark}
-                                language={match[1]}
-                                PreTag="div"
-                                {...props}
-                              >
-                                {String(children).replace(/\n$/, '')}
-                              </SyntaxHighlighter>
-                            ) : (
-                              <code className={className} {...props}>
-                                {children}
-                              </code>
-                            )
-                          }
-                        }}
-                      >
-                        {msg.text}
-                      </ReactMarkdown>
-                    </ResponseBubble>
-                  )
-                }
-              />
-            </ListItem>
-          ))}
-          <div ref={outputEndRef} />
-        </List>
-      </OutputBox>
+      <ContentContainer>
+        <OutputBox elevation={3}>
+          <List>
+            {messages.map((msg, index) => (
+              <ListItem key={index} alignItems="flex-start" disableGutters>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{
+                      bgcolor: msg.type === 'prompt' ? '#4CAF50' : '#2196F3',
+                    }}
+                  >
+                    {msg.type === 'prompt' ? <FaUser /> : <FaRobot />}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    msg.type === 'prompt' ? (
+                      <PromptBubble elevation={1}>{msg.text}</PromptBubble>
+                    ) : (
+                      <ResponseBubble elevation={1}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            // Code block rendering with syntax highlighting
+                            code({ node, inline, className, children, ...props }) {
+                              const match = /language-(\w+)/.exec(className || '')
+                              return !inline && match ? (
+                                <SyntaxHighlighter
+                                  style={materialDark}
+                                  language={match[1]}
+                                  PreTag="div"
+                                  {...props}
+                                >
+                                  {String(children).replace(/\n$/, '')}
+                                </SyntaxHighlighter>
+                              ) : (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              )
+                            }
+                          }}
+                        >
+                          {msg.text}
+                        </ReactMarkdown>
+                      </ResponseBubble>
+                    )
+                  }
+                />
+              </ListItem>
+            ))}
+            <div ref={outputEndRef} />
+          </List>
+        </OutputBox>
 
-      <Stack spacing={2}>
+        <Stack spacing={2}>
         <TextField
+          label="Prompt"
           multiline
-          minRows={3}
-          maxRows={6}
+          rows={1} 
+          minRows={1}
+          maxRows={10}
           variant="outlined"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -275,31 +292,43 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
           placeholder="Type your prompt here..."
           disabled={isSending}
           fullWidth
+          inputRef={promptInputRef}
           InputProps={{
-            style: { backgroundColor: '#3a3a3a', color: 'whitesmoke' },
+            style: { backgroundColor: '#3b82f680', color: 'whitesmoke' },
+          }}
+          InputLabelProps={{
+            sx: {
+              color: '#3b82f680', 
+
+              '&.Mui-focused': {
+                color: 'primary.main', // Optional: Change label color when focused
+              },
+            },
           }}
         />
-        <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={sendPrompt}
-            disabled={isSending}
-            startIcon={isSending ? <CircularProgress size={20} /> : null}
-          >
-            {isSending ? 'Sending...' : 'Send Prompt'}
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={saveToGraph}
-            disabled={isSaving} 
-            startIcon={isSaving ? <CircularProgress size={20} /> : null}
-          >
-            {isSaving ? 'Saving...' : 'Save to Graph'}
-          </Button>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={sendPrompt}
+              disabled={isSending}
+              startIcon={isSending ? <CircularProgress size={20} /> : null}
+            >
+              {isSending ? 'Sending...' : 'Send Prompt'}
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={saveToGraph}
+              disabled={isSaving} 
+              startIcon={isSaving ? <CircularProgress size={20} /> : null}
+            >
+              {isSaving ? 'Saving...' : 'Save to Graph'}
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
+      </ContentContainer>
+
       <Snackbar
         open={alertOpen}
         autoHideDuration={6000}
