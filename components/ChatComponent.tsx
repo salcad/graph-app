@@ -220,7 +220,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
   return (
     <ChatContainer>
       <Typography variant="h4" align="center" gutterBottom>
-        LLM Chat
+         LLM Chat Graph
       </Typography>
 
       <ContentContainer>
@@ -282,8 +282,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
         <TextField
           label="Prompt"
           multiline
-          rows={1} 
-          minRows={1}
+          minRows={2}
           maxRows={10}
           variant="outlined"
           value={prompt}
@@ -299,7 +298,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
           InputLabelProps={{
             sx: {
               color: '#3b82f680', 
-
               '&.Mui-focused': {
                 color: 'primary.main', // Optional: Change label color when focused
               },
