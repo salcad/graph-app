@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Graph from 'graphology';
 
 // Define interfaces for Neo4j data
 interface Neo4jNode {
   id: number;
   labels: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: { [key: string]: any };
 }
 
@@ -13,6 +13,7 @@ interface Neo4jEdge {
   type: string;
   startNodeId: number;
   endNodeId: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: { [key: string]: any };
 }
 
@@ -131,8 +132,8 @@ export function parseNeo4jDataToGraph(data: Neo4jRecord[]): Graph {
   data.forEach(record => {
     const { n, m, r } = record;
 
-    const labelColorN = getColorByLabel(n.labels);
-    const labelColorM = getColorByLabel(m.labels);
+    const labelColorN = n.labels.length > 0 ? getColorByLabel(n.labels[0]) : "White";
+    const labelColorM = m.labels.length > 0 ? getColorByLabel(m.labels[0]) : "White";
 
     // Add node n
     if (!graph.hasNode(n.id.toString())) {
@@ -168,7 +169,7 @@ export function parseNeo4jDataToGraph(data: Neo4jRecord[]): Graph {
         r.endNodeId.toString(),
         {
           label: r.type,
-          color: getColorByLabel(m.labels),
+          color: getColorByLabel(m.labels[0]),
           size: 1,
           // Optionally, set edge label color if needed
           // labelColor: getColorByLabel(m.labels),

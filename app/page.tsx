@@ -5,16 +5,12 @@ import dynamic from 'next/dynamic';
 import { parseNeo4jDataToGraph } from '../utils/graphParser';
 import ChatComponent from '../components/ChatComponent';
 import { Grid } from '@mui/material';
-
-interface GraphData {
-  nodes: any[];
-  links: any[];
-}
+import Graph from 'graphology';
 
 const GraphComponent = dynamic(() => import('../components/GraphComponent'), { ssr: false });
 
 const HomePage: React.FC = () => {
-  const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [graphData, setGraphData] = useState<Graph | null>(null);
 
   const fetchGraphData = async () => {
     try {
@@ -62,7 +58,7 @@ const HomePage: React.FC = () => {
           boxSizing: 'border-box',
         }}
       >
-        <GraphComponent graphData={graphData} />
+        {graphData && <GraphComponent graphData={graphData} />}
       </Grid>
     </Grid>
   );

@@ -61,11 +61,12 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
         source: source,
         target: target,
         ...attributes,
+        textColor: attributes.textColor || 'white',
       });
     });
 
     // Select the SVG element and clear any previous content
-    const svgElement = d3.select(svgRef.current);
+    const svgElement = d3.select(svgRef.current!);
     svgElement.selectAll('*').remove();
 
     // Set the SVG width and height to '100%'
@@ -102,8 +103,8 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
       )
       .force('charge', d3.forceManyBody().strength(-300)) // Adjust strength for better spacing
       .force('center', d3.forceCenter(0, 0))
-      .force('x', d3.forceX().strength((d) => (d.degree || 0) * 0.01)) // Slight pull towards center based on degree
-      .force('y', d3.forceY().strength((d) => (d.degree || 0) * 0.01)) // Slight pull towards center based on degree
+      .force('x', d3.forceX<GraphNode>().strength((d) => (d.degree || 0) * 0.01)) 
+      .force('y', d3.forceY<GraphNode>().strength((d) => (d.degree || 0) * 0.01)) 
       .stop(); // Stop the simulation to manually control ticks
 
     // Manually run the simulation to completion

@@ -154,6 +154,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
           { type: 'response', text: 'No response from LLM.' },
         ]);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error sending prompt:', error);
       setMessages((prev) => [
@@ -202,6 +203,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
           onSaveComplete();
         }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('Error saving to graph:', error);
         setAlertMessage(`Error saving to graph: ${error.message}`);
@@ -247,6 +249,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
                           remarkPlugins={[remarkGfm]}
                           components={{
                             // Code block rendering with syntax highlighting
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
                             code({ node, inline, className, children, ...props }) {
                               const match = /language-(\w+)/.exec(className || '')
                               return !inline && match ? (
