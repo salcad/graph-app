@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
@@ -19,6 +17,11 @@ import {
 } from '@mui/material';
 import { FaUser, FaRobot } from 'react-icons/fa';
 import { styled } from '@mui/material/styles';
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Message {
   type: 'prompt' | 'response';
@@ -224,7 +227,33 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
                   msg.type === 'prompt' ? (
                     <PromptBubble elevation={1}>{msg.text}</PromptBubble>
                   ) : (
-                    <ResponseBubble elevation={1}>{msg.text}</ResponseBubble>
+                    <ResponseBubble elevation={1}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // Code block rendering with syntax highlighting
+                          code({ node, inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '')
+                            return !inline && match ? (
+                              <SyntaxHighlighter
+                                style={materialDark}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            )
+                          }
+                        }}
+                      >
+                        {msg.text}
+                      </ReactMarkdown>
+                    </ResponseBubble>
                   )
                 }
               />
