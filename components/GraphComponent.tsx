@@ -11,6 +11,7 @@ interface GraphNode extends d3.SimulationNodeDatum {
   color?: string;
   size?: number;
   degree?: number; // New property to store the degree of the node
+  textColor: string;
 }
 
 interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
@@ -20,6 +21,7 @@ interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
   label?: string;
   color?: string;
   size?: number;
+  textColor: string;
 }
 
 interface GraphPageProps {
@@ -47,7 +49,9 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
       nodes.push({
         id: nodeKey,
         ...nodeAttributes,
-        size: Math.max(10, nodeAttributes.degree! * 2) // Ensure size is large enough to view
+        size: Math.max(10, nodeAttributes.degree! * 2), // Ensure size is large enough to view
+        // Set textColor to white if degree exceeds the threshold
+        textColor: nodeAttributes.degree! >= 10 ? 'white' : (nodeAttributes.textColor || 'gray'),
       });
     });
 
@@ -177,12 +181,11 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
       .enter()
       .append('text')
       .attr('class', 'node-label')
-      // Use d.label or d.id as fallback
       .text((d) => d.label || d.id)
       .attr('text-anchor', 'middle')
       .attr('dy', -10)
       .attr('font-size', '12px')
-      .attr('fill', 'white');
+      .attr('fill', (d) => d.textColor || 'white');
 
     // Add labels for the links
     const linkLabels = graphGroup
@@ -193,7 +196,7 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
       .attr('class', 'link-label')
       .text((d) => (d.label ? d.label.toLowerCase() : ''))
       .attr('font-size', '6px')
-      .attr('fill', 'white');
+      .attr('fill', (d) => d.textColor || 'white');
 
     // Function to update positions based on node coordinates
     function updatePositions() {

@@ -22,25 +22,107 @@ interface Neo4jRecord {
   m: Neo4jNode;
 }
 
-// Color mapping for labels
-const labelColors: { [label: string]: string } = {
-  Technology: '#1f77b4',
-  Concept: '#ff7f0e',
-  Framework: '#2ca02c',
-  Tool: '#d62728',
-  Platform: '#9467bd',
-  // Add more labels and colors as needed
-};
+function getColorByLabel(label: string): string {  
+  const labelToColorMap: { [key: string]: string } = {
+    // Person or Organization
+    "Person": "SkyBlue",
+    "People": "SkyBlue",
+    "Company": "SkyBlue",
+    "Organization": "SkyBlue",
 
-// Function to get color based on label
-const getColorByLabel = (labels: string[]): string => {
-  for (const label of labels) {
-    if (labelColors[label]) {
-      return labelColors[label];
-    }
-  }
-  return '#cccccc'; // Default color
-};
+    // Technologies and Software
+    "Technology": "DodgerBlue",
+    "Framework": "DodgerBlue",
+    "Tool": "DodgerBlue",
+    "Platform": "DodgerBlue",
+    "Application": "DodgerBlue",
+    "Library": "DodgerBlue",
+    "JavaScript_library": "DodgerBlue",
+    "Language": "DodgerBlue",
+    "Programming_language": "DodgerBlue",
+    "Systems_programming_language": "DodgerBlue",
+    "Database": "DodgerBlue",
+    "Query_language": "DodgerBlue",
+    "Runtime_environment": "DodgerBlue",
+    "Engine": "DodgerBlue",
+    "Operating_system": "DodgerBlue",
+    "Software_package": "DodgerBlue",
+    "Module": "DodgerBlue",
+    "Component": "DodgerBlue",
+    "Components": "DodgerBlue",
+    "Kernel": "DodgerBlue",
+
+    // Concepts and Principles
+    "Concept": "Tomato",
+    "Paradigm": "Tomato",
+    "Principle": "Tomato",
+    "Core_principle": "Tomato",
+    "Attribute": "Tomato",
+    "Aspect": "Tomato",
+    "Pure_functions": "Tomato",
+    "Domain": "Tomato",
+    "Discipline": "Tomato",
+
+    // Features and Benefits
+    "Feature": "Orange",
+    "Features": "Orange",
+    "Benefit": "Orange",
+    "Output": "Orange",
+    "Debugability": "Orange",
+    "Ease_of_testing": "Orange",
+    "Consistency": "Orange",
+    "Help_maintain": "Orange",
+
+    // Actions and Processes
+    "Action": "Turquoise",
+    "Process": "Turquoise",
+    "Activity": "Turquoise",
+    "Dispatching": "Turquoise",
+    "Changing_method": "Turquoise",
+    "Response_method": "Turquoise",
+
+    // Types and Categories
+    "Type": "LightBlue",
+    "Application_type": "LightBlue",
+    "Operations_type": "LightBlue",
+
+    // Purpose and Use Cases
+    "Purpose": "Peru",
+    "Use_case": "Peru",
+
+    // Resources and Devices
+    "Resource": "Olive",
+    "Devices": "Olive",
+    "Device": "Olive",
+
+    // Data Structures and State Management
+    "Data_structure": "DodgerBlue",
+    "State_management": "DodgerBlue",
+    "State_management_library": "DodgerBlue",
+    "Single_immutable_store": "DodgerBlue",
+    "Read_only": "DodgerBlue",
+
+    // Relations and Instances
+    "Relation": "Gray",
+    "Instances": "Gray",
+
+    // Alias
+    "Alias": "Pink",
+
+    // Objects and Artifacts
+    "Object": "Violet",
+    "Artifact": "Violet",
+
+    // Specifications and Targets
+    "Specification": "Silver",
+    "Target": "Silver",
+
+    // Movies
+    "Movie": "LightPink",
+  };
+
+  return labelToColorMap[label] || "White";
+}
 
 // Function to parse Neo4j data and create a graphology Graph
 export function parseNeo4jDataToGraph(data: Neo4jRecord[]): Graph {
@@ -49,26 +131,31 @@ export function parseNeo4jDataToGraph(data: Neo4jRecord[]): Graph {
   data.forEach(record => {
     const { n, m, r } = record;
 
+    const labelColorN = getColorByLabel(n.labels);
+    const labelColorM = getColorByLabel(m.labels);
+
     // Add node n
-    if (!graph.hasNode(n.id)) {
+    if (!graph.hasNode(n.id.toString())) {
       graph.addNode(n.id.toString(), {
         label: n.properties.name,
-        color: getColorByLabel(n.labels),
+        color: labelColorN,
+        textColor: labelColorN, 
         // Temporary random positions; will be updated by layout
         x: Math.random(),
         y: Math.random(),
-        size: 10,
+        size: 2,
       });
     }
 
     // Add node m
-    if (!graph.hasNode(m.id)) {
+    if (!graph.hasNode(m.id.toString())) {
       graph.addNode(m.id.toString(), {
         label: m.properties.name,
-        color: getColorByLabel(m.labels),
+        color: labelColorM,
+        textColor: labelColorM, 
         x: Math.random(),
         y: Math.random(),
-        size: 10,
+        size: 2,
       });
     }
 
@@ -81,8 +168,10 @@ export function parseNeo4jDataToGraph(data: Neo4jRecord[]): Graph {
         r.endNodeId.toString(),
         {
           label: r.type,
-          color: '#999999',
+          color: getColorByLabel(m.labels),
           size: 1,
+          // Optionally, set edge label color if needed
+          // labelColor: getColorByLabel(m.labels),
         }
       );
     }
