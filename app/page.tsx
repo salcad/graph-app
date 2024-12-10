@@ -37,11 +37,31 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <Grid container style={{ height: '100vh' }}>
-      <Grid item xs={12} md={6} style={{ height: '100%', overflow: 'auto' }}>
+    <Grid container sx={{ height: '100vh' }}>
+      <Grid
+        item
+        xs={12}
+        md={6}
+        sx={{
+          height: '100%',
+          overflow: 'hidden',
+          border: '2px solid darkgray',
+          boxSizing: 'border-box', 
+        }}
+      >
         <ChatComponent onSaveComplete={refreshGraphData} />
       </Grid>
-      <Grid item xs={12} md={6} style={{ height: '100%', overflow: 'hidden' }}>
+      <Grid
+        item
+        xs={12}
+        md={6}
+        sx={{
+          height: '100%',
+          overflow: 'hidden',
+          border: '2px solid darkgray',
+          boxSizing: 'border-box',
+        }}
+      >
         <GraphComponent graphData={graphData} />
       </Grid>
     </Grid>

@@ -60,14 +60,18 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
       });
     });
 
-    // Set dimensions for the SVG
-    const width = 800;
-    const height = 600;
-    const padding = 50; // Padding around the graph
-
     // Select the SVG element and clear any previous content
     const svgElement = d3.select(svgRef.current);
     svgElement.selectAll('*').remove();
+
+    // Set the SVG width and height to '100%'
+    svgElement.attr('width', '100%').attr('height', '100%');
+
+    // Get dimensions from the SVG element
+    const svgRect = svgRef.current?.getBoundingClientRect();
+    const width = svgRect?.width || 800;
+    const height = svgRect?.height || 600;
+    const padding = 50; // Padding around the graph
 
     // Add zoom and pan behavior
     const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
@@ -76,10 +80,7 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
         g.attr('transform', event.transform);
       });
 
-    const svg = svgElement
-      .attr('width', width)
-      .attr('height', height)
-      .call(zoomBehavior);
+    const svg = svgElement.call(zoomBehavior);
 
     const g = svg.append('g'); // Container for all the elements
 
@@ -130,7 +131,7 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
     // Apply the calculated zoom transform
     svg.call(
       zoomBehavior.transform,
-      d3.zoomIdentity.translate(translateX, translateY).scale(scale*2)
+      d3.zoomIdentity.translate(translateX, translateY).scale(scale * 30)
     );
 
     // Add lines for the links
@@ -237,7 +238,7 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
     };
   }, [graphData]);
 
-  return <svg ref={svgRef}></svg>;
+  return <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>;
 };
 
 export default GraphComponent;
