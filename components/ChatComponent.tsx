@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { GraphService } from '@/services/graphService';
 import {
   Box,
   Typography,
@@ -17,7 +18,6 @@ import {
 } from '@mui/material';
 import { FaUser, FaRobot } from 'react-icons/fa';
 import { styled } from '@mui/material/styles';
-
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -129,31 +129,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
     setIsSending(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      const response = await GraphService.sendPrompt(prompt);
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.response) {
-        setMessages((prev) => [
-          ...prev,
-          { type: 'response', text: data.response },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { type: 'response', text: 'No response from LLM.' },
-        ]);
-      }
+      setMessages((prev) => [
+        ...prev,
+        { type: 'response', text: response || 'No response from LLM.' },
+      ]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error sending prompt:', error);
@@ -182,17 +163,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
     if (latestResponseMessage) {
       setIsSaving(true);
       try {
-        const response = await fetch('http://localhost:8080/api/saveToGraph', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain',
-          },
-          body: latestResponseMessage.text,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
+        await GraphService.saveToGraph(latestResponseMessage.text);
 
         setAlertMessage('Successfully saved to graph.');
         setAlertSeverity('success');

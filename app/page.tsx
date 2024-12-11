@@ -2,24 +2,29 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { parseNeo4jDataToGraph } from '../utils/graphParser';
-import ChatComponent from '../components/ChatComponent';
-import { Grid } from '@mui/material';
+import ChatComponent from '@/components/ChatComponent';
+import { Grid, Alert } from '@mui/material'; // 1. Import Alert
 import Graph from 'graphology';
+import { GraphService } from '@/services/graphService';
 
 const GraphComponent = dynamic(() => import('../components/GraphComponent'), { ssr: false });
 
 const HomePage: React.FC = () => {
   const [graphData, setGraphData] = useState<Graph | null>(null);
+  const [error, setError] = useState<string | null>(null); // 2. Add error state
 
   const fetchGraphData = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/findAllNode', { cache: 'no-store' });
-      const data = await res.json();
-      const graph = parseNeo4jDataToGraph(data);
-      setGraphData(graph);
-    } catch (error) {
-      console.error('Error fetching graph data:', error);
+      const graph = await GraphService.fetchAllNodes();
+      if (graph) {
+        setGraphData(graph);
+        setError(null); 
+      } else {
+        setError('Failed to fetch graph data, please, check your neo4j db connection');
+      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setError('An unexpected error occurred while fetching graph data.');
     }
   };
 
@@ -33,7 +38,16 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <Grid container sx={{ height: '100vh' }}>
+    <Grid container sx={{ height: '100vh', position: 'relative' }}>
+      {error && (
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000 }}
+        >
+          {error}
+        </Alert>
+      )}
       <Grid
         item
         xs={12}
@@ -42,7 +56,7 @@ const HomePage: React.FC = () => {
           height: '100%',
           overflow: 'hidden',
           border: '2px solid darkgray',
-          boxSizing: 'border-box', 
+          boxSizing: 'border-box',
         }}
       >
         <ChatComponent onSaveComplete={refreshGraphData} />

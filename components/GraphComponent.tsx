@@ -33,7 +33,7 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
 
   useEffect(() => {
     // Reconstruct the Graphology Graph instance
-    const graph = new Graph();
+    const graph = new Graph({ type: 'directed', multi: true });
     graph.import(graphData);
 
     // Calculate the degree of each node

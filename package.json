@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.13.5",
     "@mui/icons-material": "^6.1.10",
     "@mui/material": "^6.1.10",
+    "axios": "^1.7.9",
     "d3": "^7.9.0",
     "graphology": "^0.25.4",
     "graphology-layout": "^0.6.1",
