@@ -136,7 +136,7 @@ const GraphComponent: React.FC<GraphPageProps> = ({ graphData }) => {
     // Apply the calculated zoom transform
     svg.call(
       zoomBehavior.transform,
-      d3.zoomIdentity.translate(translateX, translateY).scale(scale * 30)
+      d3.zoomIdentity.translate(translateX, translateY).scale(scale * 10)
     );
 
     // Add lines for the links

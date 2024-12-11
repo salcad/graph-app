@@ -279,21 +279,34 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ onSaveComplete }) => {
           }}
         />
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button
+          <Button
               variant="contained"
               color="primary"
               onClick={sendPrompt}
               disabled={isSending}
-              startIcon={isSending ? <CircularProgress size={20} /> : null}
+              startIcon={isSending ? <CircularProgress size={20} color="inherit" /> : null}
+              sx={{
+                textTransform: 'none', 
+                '&.Mui-disabled': {
+                  color: 'gray', 
+                },
+              }}
             >
               {isSending ? 'Sending...' : 'Send Prompt'}
             </Button>
+
             <Button
               variant="contained"
               color="secondary"
               onClick={saveToGraph}
-              disabled={isSaving} 
-              startIcon={isSaving ? <CircularProgress size={20} /> : null}
+              disabled={isSaving}
+              startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+              sx={{
+                textTransform: 'none', 
+                '&.Mui-disabled': {
+                  color: 'gray', 
+                },
+              }}
             >
               {isSaving ? 'Saving...' : 'Save to Graph'}
             </Button>
