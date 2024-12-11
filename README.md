@@ -27,19 +27,23 @@ Watch `LLM Chat Graph` demo on Youtube:
 
 ## Getting Started
 
-1. Create a `.env.development` file in the root of the project.
+1. ```bash
+    npm install
+    ```
+
+2. Create a `.env.development` file in the root of the project.
 
     ```bash
     NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
     ```
 
-2. Run the development server.
+3. Run the development server.
 
     ```bash
     npm run dev
     ```
 
-3. To build and run the project in production mode.
+4. To build and run the project in production mode.
 
     ```bash
     npm run build
